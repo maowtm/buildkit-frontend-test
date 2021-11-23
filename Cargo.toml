@@ -11,3 +11,5 @@ buildkit-llb = "0.2.0"
 tokio = { version = "^0.2", features = ["macros", "rt-core"] }
 async-trait = "0.1.51"
 failure = "^0.1"
+serde = "^1.0"
+serde_json = "^1.0"

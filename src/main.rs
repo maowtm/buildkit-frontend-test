@@ -1,4 +1,4 @@
-use std::{env, time::Duration};
+use std::collections::HashMap;
 
 use buildkit_frontend::{run_frontend, Bridge, Frontend, FrontendOutput};
 use buildkit_llb::prelude::*;
@@ -7,46 +7,29 @@ use async_trait::async_trait;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut infostr = String::new();
-    use std::fmt::Write;
-    write!(&mut infostr, "Args:\n")?;
-    for arg in env::args_os() {
-        write!(&mut infostr, "  {}\n", arg.to_string_lossy())?;
-    }
-
-    write!(&mut infostr, "Envs:\n")?;
-    for (key, value) in env::vars_os() {
-        write!(
-            &mut infostr,
-            "  {} = {}\n",
-            key.to_string_lossy(),
-            value.to_string_lossy()
-        )?;
-    }
-
-    run_frontend(MyFrontend(infostr)).await?;
-
+    run_frontend(MyFrontend).await?;
     Ok(())
 }
 
-struct MyFrontend(String);
+struct MyFrontend;
 
 #[async_trait]
-impl Frontend for MyFrontend {
+impl Frontend<HashMap<String, serde_json::Value>> for MyFrontend {
     async fn run(
         self,
         bridge: Bridge,
-        options: buildkit_frontend::Options,
+        options: HashMap<String, serde_json::Value>,
     ) -> Result<FrontendOutput, failure::Error> {
         let root_img = Source::image("debian:latest");
-        let terminal = Terminal::with(
-            exec::Command::run("echo")
-                .args(&[&self.0])
-                .mount(Mount::Layer(OutputIdx(0), root_img.output(), "/"))
+        let mut last_output = (OutputIdx(0), root_img.output());
+        for (k, v) in options.into_iter() {
+            last_output.1 = exec::Command::run("echo")
+                .args(&[&k, "=", &v.to_string()])
+                .mount(Mount::Layer(last_output.0, last_output.1, "/"))
                 .ref_counted()
-                .output(0),
-        );
-        let output = bridge.solve(terminal).await?;
+                .output(0);
+        }
+        let output = bridge.solve(Terminal::with(last_output.1)).await?;
         Ok(FrontendOutput::with_ref(output))
     }
 }
