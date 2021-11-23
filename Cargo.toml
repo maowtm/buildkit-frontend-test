@@ -1,0 +1,13 @@
+[package]
+name = "bktest"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+buildkit-frontend = "0.3.0"
+buildkit-llb = "0.2.0"
+tokio = { version = "^0.2", features = ["macros", "rt-core"] }
+async-trait = "0.1.51"
+failure = "^0.1"
