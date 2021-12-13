@@ -108,6 +108,7 @@ dependencies = [
  "buildkit-frontend",
  "buildkit-llb",
  "failure",
+ "rand 0.8.4",
  "serde",
  "serde_json",
  "tokio",

@@ -1,8 +1,10 @@
 FROM rust AS build
 WORKDIR /usr/src/app
-COPY ./src ./src
+RUN mkdir src && echo "fn main() {}" > src/main.rs
 COPY ./Cargo.lock .
 COPY ./Cargo.toml .
+RUN cargo build --release
+COPY ./src ./src
 RUN cargo build --release
 
 FROM debian
